@@ -1,6 +1,6 @@
 version: '3'
 services:
-  db:
+  dbrails:
     image: postgres:11.1-alpine
   web:
     build: .
@@ -10,4 +10,4 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - db
+      - dbrails
