@@ -1,22 +1,18 @@
-FROM ruby:2.6.6-alpine
-
-# Minimal requirements to run a Rails app
-RUN apk add --no-cache --update build-base \
-                                linux-headers \
-                                git \
-                                postgresql-dev \
-                                nodejs \
-                                tzdata
-
-ENV APP_PATH /usr/src/app
-
-# Different layer for gems installation
-WORKDIR $APP_PATH
-ADD Gemfile $APP_PATH
-ADD Gemfile.lock $APP_PATH
+FROM ruby:2.6.6
+RUN apt-get update -qq && apt-get install -y nodejs postgresql-client
+RUN mkdir /myapp
+WORKDIR /myapp
+COPY Gemfile /myapp/Gemfile
+COPY Gemfile.lock /myapp/Gemfile.lock
 RUN gem install bundler -v 2.1.4
-RUN bundle install --jobs `expr $(cat /proc/cpuinfo | grep -c "cpu cores") - 1` --retry 3
+RUN bundle install
+COPY . /myapp
 
-# Copy the application into the container
-COPY . APP_PATH
+# Add a script to be executed every time the container starts.
+COPY entrypoint.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.sh
+ENTRYPOINT ["entrypoint.sh"]
 EXPOSE 3000
+
+# Start the main process.
+CMD ["rails", "server", "-b", "0.0.0.0"]
